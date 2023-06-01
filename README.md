@@ -1,5 +1,6 @@
 # Discord Login Verification Bot
 [中文文档 - Chinese Document](https://github.com/NagatoException/SimpleDiscordLoginVerifyBot/blob/main/README.zh.md)
+
 This project is a Discord login verification bot designed to handle user login requests and verification operations.
 
 

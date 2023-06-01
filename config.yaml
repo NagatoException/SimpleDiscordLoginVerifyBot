@@ -1,0 +1,12 @@
+general:
+  domain: "" # Your Domain
+  server_id: "" # Your Discord ServerID
+  ssl_enabled: false
+  ssl:
+    cert_file: "" # Your SSL Cert File Path
+    key_file: "" # Your SSL Key File Path
+bot:
+  token: "" # Your Discord Bot Token
+cache:
+  expire: "" # Cache Expire Time (Seconds)
+  clean_interval: "" # Cache Clean Interval (Seconds)
