@@ -112,10 +112,9 @@ func handleNewLogin(w http.ResponseWriter, r *http.Request) {
 		logger.Println("Invalid request parameters")
 		return
 	}
-
-	uuidStr := uuid.New().String()
 	isExist, _ := UserExist(username, tag)
 	if isExist {
+		uuidStr := uuid.New().String()
 		Cache.Set(uuidStr, username, cache.DefaultExpiration)
 		discordSession, err := discordgo.New("Bot " + config.Bot.Token)
 		_, userID := UserExist(username, tag)
@@ -124,17 +123,18 @@ func handleNewLogin(w http.ResponseWriter, r *http.Request) {
 			loginURL := generateLoginURL(uuidStr)
 			sendMessageToUser(discordSession, userChannel.ID, "Click the following link to log in: "+loginURL)
 		}
+		response := struct {
+			Success bool   `json:"success"`
+			UUID    string `json:"uuid"`
+		}{
+			Success: true,
+			UUID:    uuidStr,
+		}
+		Response(w, http.StatusOK, response)
+		logger.Printf("New login request processed successfully, UUID: %s\n", uuidStr)
+		return
 	}
-
-	response := struct {
-		Success bool   `json:"success"`
-		UUID    string `json:"uuid"`
-	}{
-		Success: true,
-		UUID:    uuidStr,
-	}
-	Response(w, http.StatusOK, response)
-	logger.Printf("New login request processed successfully. UUID: %s\n", uuidStr)
+	w.WriteHeader(http.StatusBadRequest)
 	return
 }
 
