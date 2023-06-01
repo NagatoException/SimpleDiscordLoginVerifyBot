@@ -1,29 +1,53 @@
-# .github/workflows/release.yaml
-
-name: Build Release
+name: Build and Release
 
 on:
+  push:
+    branches:
+      - main  # 替换为你的默认分支
   release:
-    types: [created]
+    types:
+      - created
 
 jobs:
-  releases-matrix:
-    name: Release Go Binary
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [ linux, windows, darwin ]
-        goarch: [ "386", amd64, arm64 ]
-        exclude:
-          - goarch: "386"
-            goos: darwin
+  build:
+    name: Build
+    runs-on: ubuntu-latest  # 可以根据需要选择其他操作系统
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: wangyoucao577/go-release-action@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          goos: ${{ matrix.goos }}
-          goarch: ${{ matrix.goarch }}
-          goversion: "1.20"
-          binary_name: "SimpleDiscordLoginVerifyBot"
-          extra_files: LICENSE README.md
+          go-version: 1.16  # 替换为你需要的 Go 版本
+
+      - name: Build project
+        run: go build
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16  # 替换为你需要的 Go 版本
+
+      - name: Build project
+        run: go build
+
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
