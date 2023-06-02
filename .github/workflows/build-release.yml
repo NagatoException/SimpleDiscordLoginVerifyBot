@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v3.5.2
 
       - name: Set up Go
-        uses: actions/setup-go@4.01
+        uses: actions/setup-go@4.0.1
         with:
           go-version: 1.20
 
