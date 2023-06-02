@@ -1,17 +1,19 @@
-name: Build and Release
+name: Build
 
 on:
   push:
     branches:
-      - main  # 替换为你的默认分支
-  release:
-    types:
-      - created
+      - main
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest  # 可以根据需要选择其他操作系统
+    name: Build on ${{ matrix.os }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        arch: [amd64, arm64]  # 可根据需要添加其他架构
 
     steps:
       - name: Checkout
@@ -20,10 +22,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16  # 替换为你需要的 Go 版本
+          go-version: 1.20
 
       - name: Build project
         run: go build
+
+    outputs:
+      binary_path: ${{ steps.build.outputs.binary_path }}
 
   release:
     name: Create Release
@@ -37,17 +42,15 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16  # 替换为你需要的 Go 版本
+          go-version: 1.20
 
       - name: Build project
         run: go build
 
       - name: Create release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
+          files: |
+            ${{ needs.build.outputs.binary_path }}/*
+
+          token: ${{ secrets.GITHUB_TOKEN }}
