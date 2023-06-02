@@ -10,6 +10,11 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        os: [linux, darwin, windows]
+        arch: [amd64, arm64]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -24,10 +29,7 @@ jobs:
 
       - name: Build project
         run: |
-          GOOS=linux GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-linux-amd64
-          GOOS=linux GOARCH=arm64 go build -o SimpleDiscordLoginVerifyBot-linux-arm64
-          GOOS=darwin GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-darwin-amd64
-          GOOS=windows GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-windows-amd64.exe
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o SimpleDiscordLoginVerifyBot-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -59,10 +61,7 @@ jobs:
 
       - name: Build project
         run: |
-          GOOS=linux GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-linux-amd64
-          GOOS=linux GOARCH=arm64 go build -o SimpleDiscordLoginVerifyBot-linux-arm64
-          GOOS=darwin GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-darwin-amd64
-          GOOS=windows GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-windows-amd64.exe
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o SimpleDiscordLoginVerifyBot-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -103,6 +102,3 @@ jobs:
             SimpleDiscordLoginVerifyBot-artifacts.zip
           asset_name: SimpleDiscordLoginVerifyBot-${{ matrix.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
-        matrix:
-          os: [linux, darwin, windows]
-          arch: [amd64, arm64]
