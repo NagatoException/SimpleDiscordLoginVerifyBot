@@ -1,4 +1,4 @@
-name: Build
+name: Build and Release
 
 on:
   push:
@@ -7,13 +7,8 @@ on:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }} ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        arch: [amd64, arm64]  # 可根据需要添加其他架构
+    name: Build
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -24,11 +19,26 @@ jobs:
         with:
           go-version: 1.20
 
-      - name: Build project
-        run: go build
+      - name: Download dependencies
+        run: go mod download
 
-    outputs:
-      binary_path: ${{ steps.build.outputs.binary_path }}
+      - name: Build project
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-linux-amd64
+          GOOS=linux GOARCH=arm64 go build -o SimpleDiscordLoginVerifyBot-linux-arm64
+          GOOS=darwin GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-darwin-amd64
+          GOOS=windows GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-windows-amd64.exe
+
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Copy License and Readme files
+        run: |
+          cp LICENSE artifacts/
+          cp README.md artifacts/
+
+      - name: Archive artifacts
+        run: zip -r SimpleDiscordLoginVerifyBot-artifacts.zip artifacts/
 
   release:
     name: Create Release
@@ -44,13 +54,55 @@ jobs:
         with:
           go-version: 1.20
 
+      - name: Download dependencies
+        run: go mod download
+
       - name: Build project
-        run: go build
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-linux-amd64
+          GOOS=linux GOARCH=arm64 go build -o SimpleDiscordLoginVerifyBot-linux-arm64
+          GOOS=darwin GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-darwin-amd64
+          GOOS=windows GOARCH=amd64 go build -o SimpleDiscordLoginVerifyBot-windows-amd64.exe
+
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Copy License and Readme files
+        run: |
+          cp LICENSE artifacts/
+          cp README.md artifacts/
+
+      - name: Archive artifacts
+        run: zip -r SimpleDiscordLoginVerifyBot-artifacts.zip artifacts/
 
       - name: Create release
+        id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: |
-            ${{ needs.build.outputs.binary_path }}/*
+          tag_name: v1.0.0
+          release_name: Release v1.0.0
+          body: |
+            Release v1.0.0
+          draft: false
+          prerelease: false
 
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload release assets
+        id: upload-release-assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: |
+            SimpleDiscordLoginVerifyBot-linux-amd64
+            SimpleDiscordLoginVerifyBot-linux-arm64
+            SimpleDiscordLoginVerifyBot-darwin-amd64
+            SimpleDiscordLoginVerifyBot-windows-amd64.exe
+            SimpleDiscordLoginVerifyBot-artifacts.zip
+          asset_name: SimpleDiscordLoginVerifyBot-${{ matrix.os }}-${{ matrix.arch }}
+          asset_content_type: application/octet-stream
+        matrix:
+          os: [linux, darwin, windows]
+          arch: [amd64, arm64]
